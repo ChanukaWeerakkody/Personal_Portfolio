@@ -1,0 +1,290 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-background: rgb(var(--bg));
+  --color-foreground: rgb(var(--fg));
+  --color-muted: rgb(var(--muted));
+  --color-accent: rgb(var(--accent));
+  --color-card: rgb(var(--card));
+  --color-line: rgb(var(--line));
+
+  --animate-gradient-pan: gradient-pan 8s ease infinite;
+  --animate-blink: blink 1s step-end infinite;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --accent: 99 102 241;
+  color-scheme: dark;
+}
+
+[data-theme='dark'] {
+  --bg: 7 8 12;
+  --fg: 237 240 246;
+  --muted: 148 156 172;
+  --card: 255 255 255;
+  --line: 255 255 255;
+
+  --card-a: 0.04;
+  --line-a: 0.09;
+}
+
+[data-theme='light'] {
+  --bg: 247 248 251;
+  --fg: 14 17 26;
+  --muted: 88 96 112;
+  --card: 255 255 255;
+  --line: 15 23 42;
+
+  --card-a: 0.7;
+  --line-a: 0.1;
+
+  color-scheme: light;
+}
+
+@layer base {
+  html {
+    scroll-behavior: auto;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+
+  body {
+    background-color: rgb(var(--bg));
+    color: rgb(var(--fg));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.3);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  section[id] {
+    scroll-margin-top: 5rem;
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgb(var(--card) / var(--card-a));
+    border: 1px solid rgb(var(--line) / var(--line-a));
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  .glass-hover {
+    transition:
+      transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+      border-color 0.3s,
+      box-shadow 0.3s;
+  }
+
+  .glass-hover:hover {
+    transform: translateY(-4px);
+    border-color: rgb(var(--accent) / 0.45);
+    box-shadow: 0 20px 50px -20px rgb(var(--accent) / 0.35);
+  }
+
+  .gradient-text {
+    background-image: linear-gradient(
+      110deg,
+      rgb(var(--fg)) 20%,
+      rgb(var(--accent)) 50%,
+      rgb(var(--fg)) 80%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradient-pan 8s ease infinite;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    line-height: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: rgb(var(--accent));
+  }
+
+  .section {
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 72rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 500;
+    transition-property:
+      color,
+      background-color,
+      border-color,
+      text-decoration-color,
+      fill,
+      stroke,
+      opacity,
+      box-shadow,
+      transform,
+      filter,
+      backdrop-filter;
+    transition-duration: 300ms;
+    user-select: none;
+  }
+
+  .btn-primary {
+    background-color: rgb(var(--accent));
+    color: rgb(7 8 12);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 30px -4px rgb(var(--accent) / 0.7);
+    transform: translateY(-0.125rem);
+  }
+
+  .btn-ghost {
+    background: rgb(var(--card) / var(--card-a));
+    border: 1px solid rgb(var(--line) / var(--line-a));
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  .btn-ghost:hover {
+    border-color: rgb(var(--accent) / 0.5);
+    transform: translateY(-0.125rem);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    border: 1px solid rgb(var(--line) / 0.1);
+    background-color: rgb(var(--card) / 0.05);
+    padding: 0.25rem 0.625rem;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1rem;
+    color: rgb(var(--muted));
+  }
+
+  .input {
+    width: 100%;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(var(--line) / var(--line-a));
+    background-color: transparent;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    outline: none;
+    transition-property: color, background-color, border-color;
+    transition-duration: 150ms;
+  }
+
+  .input::placeholder {
+    color: rgb(var(--muted) / 0.7);
+  }
+
+  .input:focus {
+    border-color: rgb(var(--accent));
+    box-shadow: 0 0 0 3px rgb(var(--accent) / 0.15);
+  }
+
+  .input[aria-invalid='true'] {
+    border-color: rgb(248 113 113);
+  }
+
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--accent) / 0.4) transparent;
+  }
+}
+
+@keyframes gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding-top: 8rem;
+    padding-bottom: 8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
