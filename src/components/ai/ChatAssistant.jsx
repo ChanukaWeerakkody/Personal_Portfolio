@@ -1,22 +1,38 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Bot, Mic, Send, Sparkles, User, Volume2, VolumeX, X } from 'lucide-react';
-import { ask, SUGGESTIONS } from '@/lib/assistant';
+import { ask, COMMAND_FALLBACK, executeChatCommand, isCommand, SUGGESTIONS } from '@/lib/assistant';
 import { speak, useVoice } from '@/hooks/useVoice';
 import { useApp } from '@/lib/app';
 import { cn, scrollToId } from '@/lib/utils';
 
-const GREETING = { role: 'bot', text: "Hi! I'm Chanuka's AI assistant. Ask me about his skills, projects, experience or availability — or tap the mic and speak." };
-const SECTION_LABEL = { about: 'About', experience: 'Journey', skills: 'Skills', projects: 'Projects', github: 'GitHub', writing: 'Blogs', contact: 'Contact' };
+const GREETING = { role: 'bot', text: "Hi! I'm Chanuka's AI assistant. Ask me about his architecture patterns, backend engineering stack, projects, or availability." };
+const SECTION_LABEL = { about: 'About', experience: 'Journey', skills: 'Skills', architecture: 'Architecture', projects: 'Projects', github: 'GitHub', writing: 'Blogs', contact: 'Contact' };
 
-export default function ChatAssistant() {
-  const { chatOpen: open, setChatOpen: setOpen } = useApp();
+export default function ChatAssistant({ isOpen: propIsOpen, onClose: propOnClose } = {}) {
+  const app = useApp();
+
+  const isControlled = propIsOpen !== undefined;
+  const open = isControlled ? propIsOpen : (app.chatOpen ?? false);
+  const setOpen = useCallback(
+    (nextVal) => {
+      const nextOpen = typeof nextVal === 'function' ? nextVal(open) : nextVal;
+      if (!nextOpen && propOnClose) {
+        propOnClose();
+      }
+      app.setChatOpen?.(nextOpen);
+    },
+    [open, propOnClose, app],
+  );
+
   const [messages, setMessages] = useState([GREETING]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [speakReplies, setSpeakReplies] = useState(false);
   const endRef = useRef(null);
   const inputRef = useRef(null);
+  const dialogRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const mounted = useRef(true);
   
   // Stale state tracking
@@ -50,6 +66,104 @@ export default function ChatAssistant() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, setOpen]);
 
+  /**
+   * Scroll isolation & body scroll lock:
+   * 1. Lock background scrolling using document.body.style.overflow = 'hidden'
+   * 2. Restore original body overflow value on close or unmount
+   * 3. Prevent unintended wheel & touch scroll propagation to background
+   * 4. Allow vertical scrolling inside chatbot message container
+   */
+  useEffect(() => {
+    if (!open) return;
+
+    const body = document.body;
+    const originalOverflow = body.style.overflow;
+    body.style.overflow = 'hidden';
+
+    const handleWheel = (e) => {
+      const scrollEl = messagesContainerRef.current;
+      if (!scrollEl) return;
+
+      e.stopPropagation();
+
+      if (!scrollEl.contains(e.target)) {
+        e.preventDefault();
+        return;
+      }
+
+      const { scrollTop, scrollHeight, clientHeight } = scrollEl;
+      const isScrollable = scrollHeight > clientHeight;
+
+      if (!isScrollable) {
+        e.preventDefault();
+        return;
+      }
+
+      const isAtTop = scrollTop <= 0 && e.deltaY < 0;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1 && e.deltaY > 0;
+      if (isAtTop || isAtBottom) {
+        e.preventDefault();
+      }
+    };
+
+    let touchStartY = 0;
+    const handleTouchStart = (e) => {
+      if (e.touches && e.touches.length > 0) {
+        touchStartY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      const scrollEl = messagesContainerRef.current;
+      if (!scrollEl) return;
+
+      e.stopPropagation();
+
+      if (!scrollEl.contains(e.target)) {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+        return;
+      }
+
+      const { scrollTop, scrollHeight, clientHeight } = scrollEl;
+      const isScrollable = scrollHeight > clientHeight;
+
+      if (!isScrollable) {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+        return;
+      }
+
+      const touchCurrentY = e.touches?.[0]?.clientY ?? touchStartY;
+      const deltaY = touchStartY - touchCurrentY;
+
+      const isAtTop = scrollTop <= 0 && deltaY < 0;
+      const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1 && deltaY > 0;
+
+      if ((isAtTop || isAtBottom) && e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    const dialogEl = dialogRef.current;
+    if (dialogEl) {
+      dialogEl.addEventListener('wheel', handleWheel, { passive: false });
+      dialogEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+      dialogEl.addEventListener('touchmove', handleTouchMove, { passive: false });
+    }
+
+    return () => {
+      body.style.overflow = originalOverflow;
+      if (dialogEl) {
+        dialogEl.removeEventListener('wheel', handleWheel);
+        dialogEl.removeEventListener('touchstart', handleTouchStart);
+        dialogEl.removeEventListener('touchmove', handleTouchMove);
+      }
+    };
+  }, [open]);
+
   const send = useCallback(async (text) => {
     const q = text.trim().slice(0, 500);
     if (!q || busy) return;
@@ -58,10 +172,44 @@ export default function ChatAssistant() {
     const userMessage = { role: 'user', text: q };
     const currentHistory = messagesRef.current;
 
-    setMessages((m) => [...m, userMessage]);
     setBusy(true);
 
     try {
+      if (isCommand(q)) {
+        let cmdRes;
+        try {
+          cmdRes = await executeChatCommand(q);
+        } catch {
+          cmdRes = { success: false, text: COMMAND_FALLBACK };
+        }
+
+        if (!mounted.current) return;
+
+        if (cmdRes && cmdRes.success && cmdRes.action === 'clear') {
+          setMessages([GREETING]);
+          return;
+        }
+
+        const isSuccess = Boolean(cmdRes && cmdRes.success && cmdRes.text);
+        const botText = isSuccess ? cmdRes.text : COMMAND_FALLBACK;
+        const botSection = isSuccess ? (cmdRes.section || null) : null;
+        const botSource = isSuccess ? 'command' : 'system';
+
+        setMessages((m) => [
+          ...m,
+          userMessage,
+          { role: 'bot', text: botText, section: botSection, source: botSource },
+        ]);
+
+        if (speakReplies && isSuccess && botText) {
+          speak(botText.replace(/[•·]/g, ''));
+        }
+        return;
+      }
+
+      // Normal question processing
+      setMessages((m) => [...m, userMessage]);
+
       const [res] = await Promise.all([
         ask(q, currentHistory),
         new Promise((r) => setTimeout(r, 350))
@@ -78,14 +226,25 @@ export default function ChatAssistant() {
       if (speakReplies && res?.text) {
         speak(res.text.replace(/[•·]/g, ''));
       }
-    } catch (err) {
+    } catch {
       if (!mounted.current) return;
-      setMessages((m) => [
-        ...m,
-        { role: 'bot', text: "Something went wrong. Please try asking again." }
-      ]);
+      setMessages((m) => {
+        const hasUser = m[m.length - 1]?.text === q;
+        const base = hasUser ? m : [...m, userMessage];
+        return [
+          ...base,
+          {
+            role: 'bot',
+            text: isCommand(q)
+              ? COMMAND_FALLBACK
+              : "Something went wrong. Please try asking again."
+          }
+        ];
+      });
     } finally {
-      setBusy(false);
+      if (mounted.current) {
+        setBusy(false);
+      }
     }
   }, [busy, speakReplies]);
 
@@ -105,6 +264,7 @@ export default function ChatAssistant() {
       <AnimatePresence>
         {open && (
           <motion.section
+            ref={dialogRef}
             role="dialog" aria-label="AI assistant"
             initial={{ opacity: 0, y: 24, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 16, scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 380, damping: 32 }} style={{ transformOrigin: 'bottom right' }}
@@ -121,13 +281,18 @@ export default function ChatAssistant() {
               </button>
             </header>
 
-            <div role="log" aria-live="polite" className="scroll-thin flex-1 space-y-3 overflow-y-auto p-4">
+            <div
+              ref={messagesContainerRef}
+              role="log"
+              aria-live="polite"
+              className="scroll-thin flex-1 space-y-3 overflow-y-auto overscroll-contain p-4"
+            >
               {messages.map((m, i) => (
                 <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={cn('flex gap-2', m.role === 'user' && 'flex-row-reverse')}>
                   <span className={cn('mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full', m.role === 'user' ? 'bg-line/10' : 'bg-accent/15 text-accent')}>
                     {m.role === 'user' ? <User size={12} /> : <Bot size={12} />}
                   </span>
-                  <div className={cn('max-w-[85%] whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed', m.role === 'user' ? 'rounded-tr-sm bg-accent text-[rgb(7_8_12)]' : 'rounded-tl-sm border border-line/10 bg-card/5')}>
+                  <div className={cn('max-w-[85%] whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed', m.role === 'user' ? 'rounded-tr-sm bg-accent text-[rgb(7_8_12)]' : 'rounded-tl-sm border border-line/10 bg-line/5')}>
                     {m.text}
                     {m.section && SECTION_LABEL[m.section] && (
                       <button onClick={() => { scrollToId(m.section); if (window.innerWidth < 640) setOpen(false); }}

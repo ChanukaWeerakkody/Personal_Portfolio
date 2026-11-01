@@ -234,7 +234,7 @@ export default function Timeline() {
       </SectionHeading>
 
       {/* ── Filter pills ── */}
-      <div role="tablist" aria-label="Filter timeline" className="mb-10 inline-flex rounded-full glass p-1">
+      <div role="tablist" aria-label="Filter timeline" className="mb-10 inline-flex max-w-full overflow-x-auto rounded-full glass p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {FILTERS.map(([id, label]) => (
           <button
             key={id}
@@ -242,7 +242,7 @@ export default function Timeline() {
             aria-selected={filter === id}
             onClick={() => setFilter(id)}
             className={cn(
-              'relative flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm transition-colors',
+              'relative flex shrink-0 items-center gap-1.5 rounded-full px-4 py-1.5 text-sm transition-colors',
               filter === id ? 'text-[rgb(7_8_12)]' : 'text-muted hover:text-foreground',
             )}
           >
@@ -257,7 +257,7 @@ export default function Timeline() {
             <span
               className={cn(
                 'rounded-full px-1.5 font-mono text-[10px]',
-                filter === id ? 'bg-black/15' : 'bg-white/5',
+                filter === id ? 'bg-black/15' : 'bg-line/10',
               )}
             >
               {count(id)}

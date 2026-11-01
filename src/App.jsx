@@ -20,6 +20,7 @@ import CustomCursor from './components/ui/CustomCursor';
 // Below-the-fold and optional widgets are split out of the critical bundle.
 const Timeline = lazy(() => import('@/components/sections/Timeline'));
 const Skills = lazy(() => import('@/components/sections/Skills'));
+const Architecture = lazy(() => import('@/components/sections/Architecture'));
 const Projects = lazy(() => import('@/components/sections/Projects'));
 const GithubStats = lazy(() => import('@/components/sections/GithubStats'));
 const Writing = lazy(() => import('@/components/sections/Writing'));
@@ -72,6 +73,7 @@ function Shell() {
         <Suspense fallback={<SectionFallback />}>
           <Timeline />
           <Skills />
+          <Architecture />
           <Projects />
           <GithubStats />
           <Writing />

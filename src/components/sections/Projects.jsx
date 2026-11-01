@@ -13,15 +13,21 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Database,
   ExternalLink,
   Github,
+  Layers,
   Search,
+  ShieldCheck,
+  Sparkles,
   Star,
+  Workflow,
   X,
 } from 'lucide-react';
 import { projects } from '@/data/profile';
 import { SUMMARY_MODES, summarizeProject } from '@/lib/summaries';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/lib/theme';
 import SectionHeading from '@/components/ui/SectionHeading';
 
 /* ═══════════════════════════ Constants & helpers ═══════════════════════════ */
@@ -56,7 +62,7 @@ const BRAND = {
 };
 const brandOf = (tag) => BRAND[norm(tag)] ?? 'var(--accent)';
 
-const FEATURED_STACK = ['Spring Boot', 'NestJS', 'Laravel', 'React'];
+const FEATURED_STACK = ['Spring Boot', 'NestJS', 'React Native', 'React'];
 const FEATURED_KEYS = new Set(FEATURED_STACK.map(norm));
 
 /* tag index: key → { key, label, count } */
@@ -95,7 +101,6 @@ const SIZE = {
 
 /* ═══════════════════════════ Interactive tech badge ═══════════════════════════ */
 function TechBadge({ tag, active = false, onToggle, variant = 'dark', className }) {
-  const dark = variant === 'dark';
   return (
     <motion.button
       type="button"
@@ -111,8 +116,11 @@ function TechBadge({ tag, active = false, onToggle, variant = 'dark', className 
         active
           ? 'border-[rgb(var(--c))] bg-[rgb(var(--c)/0.18)] shadow-[0_0_18px_-4px_rgb(var(--c)/0.9)]'
           : 'border-[rgb(var(--c)/0.2)] bg-[rgb(var(--c)/0.06)] hover:border-[rgb(var(--c)/0.65)] hover:bg-[rgb(var(--c)/0.14)]',
-        dark
-          ? active ? 'text-white' : 'text-slate-300 hover:text-white'
+        /* Card-interior badges use surface tokens; page-level badges use page tokens */
+        variant === 'dark'
+          ? active
+            ? 'text-[rgb(var(--surface-text))]'
+            : 'text-[rgb(var(--surface-muted))] hover:text-[rgb(var(--surface-text))]'
           : active ? 'text-foreground' : 'text-muted hover:text-foreground',
         className,
       )}
@@ -204,7 +212,7 @@ const BentoCard = forwardRef(function BentoCard({ project: p, size, span, index,
       className={cn('min-h-[15rem]', span)}
     >
       <div className="group h-full [perspective:1000px]" onPointerMove={onMove} onPointerLeave={onLeave}>
-        <motion.div style={{ rotateX: rx, rotateY: ry }} className="relative h-full rounded-3xl bg-white/10 p-px">
+        <motion.div style={{ rotateX: rx, rotateY: ry }} className="relative h-full rounded-3xl bg-[rgb(var(--surface-fill)/var(--surface-fill-a))] p-px">
           {/* cursor-following border glow */}
           <motion.span
             aria-hidden
@@ -212,16 +220,16 @@ const BentoCard = forwardRef(function BentoCard({ project: p, size, span, index,
             className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           />
 
-          <article className="relative flex h-full flex-col overflow-hidden rounded-[23px] bg-[rgb(10_11_16)] text-slate-100">
+          <article className="relative flex h-full flex-col overflow-hidden rounded-[23px] bg-[rgb(var(--surface))] text-[rgb(var(--surface-text))]">
             {/* layered cinematic backdrop */}
             <div aria-hidden className="absolute inset-0 origin-top-right transition-transform duration-700 ease-out group-hover:scale-110" style={{ background: mesh(h) }} />
-            <div aria-hidden className="absolute inset-0 [background-image:radial-gradient(rgb(255_255_255/.14)_1px,transparent_1px)] [background-size:16px_16px] [mask-image:linear-gradient(160deg,#000,transparent_65%)]" />
+            <div aria-hidden className="absolute inset-0 [background-image:radial-gradient(rgb(var(--surface-border)/.14)_1px,transparent_1px)] [background-size:16px_16px] [mask-image:linear-gradient(160deg,#000,transparent_65%)]" />
             <motion.span
               aria-hidden
               style={{ background: spot }}
               className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
             />
-            <span aria-hidden className={cn('pointer-events-none absolute -bottom-6 -right-2 select-none font-display font-bold leading-none text-white/[0.045] transition-transform duration-700 group-hover:-translate-x-2', s.mark)}>
+            <span aria-hidden className={cn('pointer-events-none absolute -bottom-6 -right-2 select-none font-display font-bold leading-none text-[rgb(var(--surface-border)/.045)] transition-transform duration-700 group-hover:-translate-x-2', s.mark)}>
               {p.title.split(/[\s–-]/)[0]}
             </span>
 
@@ -235,13 +243,13 @@ const BentoCard = forwardRef(function BentoCard({ project: p, size, span, index,
 
             <div className={cn('pointer-events-none relative z-10 flex h-full flex-col', s.pad)}>
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-slate-400">
-                  <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 backdrop-blur">{p.category}</span>
+                <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-[rgb(var(--surface-dim))]">
+                  <span className="rounded-full border border-[rgb(var(--surface-border)/0.1)] bg-[rgb(var(--surface-fill)/var(--surface-fill-a))] px-2.5 py-1 backdrop-blur">{p.category}</span>
                   <span>{p.year}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {p.featured && <Star size={15} aria-label="Featured" className="fill-accent text-accent" />}
-                  <span className="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/5 text-slate-300 backdrop-blur transition-all duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-[rgb(7_8_12)]">
+                  <span className="grid h-8 w-8 place-items-center rounded-full border border-[rgb(var(--surface-border)/0.1)] bg-[rgb(var(--surface-fill)/var(--surface-fill-a))] text-[rgb(var(--surface-muted))] backdrop-blur transition-all duration-300 group-hover:border-accent group-hover:bg-accent group-hover:text-[rgb(var(--bg))]">
                     <ArrowUpRight size={15} className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                   </span>
                 </div>
@@ -249,14 +257,14 @@ const BentoCard = forwardRef(function BentoCard({ project: p, size, span, index,
 
               <div className="mt-auto pt-10">
                 <h3 className={cn('font-semibold leading-tight tracking-tight', s.title)}>{p.title}</h3>
-                <p className={cn('mt-2 text-slate-300/80', s.desc)}>{p.description}</p>
+                <p className={cn('mt-2 text-[rgb(var(--surface-muted)/.85)]', s.desc)}>{p.description}</p>
 
                 {s.metrics && p.metrics?.length > 0 && (
-                  <dl className="mt-5 grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur">
+                  <dl className="mt-5 grid grid-cols-1 gap-2 rounded-2xl border border-[rgb(var(--surface-border)/0.1)] bg-[rgb(var(--surface-fill)/var(--surface-fill-a))] backdrop-blur sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-[rgb(var(--surface-border)/0.1)]">
                     {p.metrics.slice(0, 3).map(([k, v]) => (
                       <div key={k} className="px-4 py-3">
-                        <dt className="text-[11px] text-slate-400">{k}</dt>
-                        <dd className="mt-0.5 text-sm font-medium text-white">{v}</dd>
+                        <dt className="text-[11px] text-[rgb(var(--surface-dim))]">{k}</dt>
+                        <dd className="mt-0.5 text-sm font-medium text-[rgb(var(--surface-text))]">{v}</dd>
                       </div>
                     ))}
                   </dl>
@@ -268,7 +276,7 @@ const BentoCard = forwardRef(function BentoCard({ project: p, size, span, index,
                       <TechBadge key={t} tag={t} active={activeTag === norm(t)} onToggle={() => onTag(norm(t))} />
                     ))}
                     {tags.length > s.badges && (
-                      <span className="rounded-full border border-white/10 px-2 py-1 font-mono text-[11px] text-slate-500">+{tags.length - s.badges}</span>
+                      <span className="rounded-full border border-[rgb(var(--surface-border)/0.1)] px-2 py-1 font-mono text-[11px] text-[rgb(var(--surface-dim))]">+{tags.length - s.badges}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -278,7 +286,7 @@ const BentoCard = forwardRef(function BentoCard({ project: p, size, span, index,
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`Live demo of ${p.title}`}
-                        className="pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 text-xs text-slate-200 outline-none transition hover:-translate-y-0.5 hover:border-accent/60 hover:text-accent focus-visible:ring-2 focus-visible:ring-accent"
+                        className="pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-full border border-[rgb(var(--surface-border)/0.1)] bg-[rgb(var(--surface-fill)/var(--surface-fill-a))] px-3 text-xs text-[rgb(var(--surface-muted))] outline-none transition hover:-translate-y-0.5 hover:border-accent/60 hover:text-accent focus-visible:ring-2 focus-visible:ring-accent"
                       >
                         Live <ExternalLink size={12} />
                       </a>
@@ -289,7 +297,7 @@ const BentoCard = forwardRef(function BentoCard({ project: p, size, span, index,
                         target="_blank"
                         rel="noopener noreferrer"
                         aria-label={`GitHub repository for ${p.title}`}
-                        className="pointer-events-auto grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/5 text-slate-200 outline-none transition hover:-translate-y-0.5 hover:border-accent/60 hover:text-accent focus-visible:ring-2 focus-visible:ring-accent"
+                        className="pointer-events-auto grid h-8 w-8 place-items-center rounded-full border border-[rgb(var(--surface-border)/0.1)] bg-[rgb(var(--surface-fill)/var(--surface-fill-a))] text-[rgb(var(--surface-muted))] outline-none transition hover:-translate-y-0.5 hover:border-accent/60 hover:text-accent focus-visible:ring-2 focus-visible:ring-accent"
                       >
                         <Github size={15} />
                       </a>
@@ -307,8 +315,11 @@ const BentoCard = forwardRef(function BentoCard({ project: p, size, span, index,
 
 /* ═══════════════════════════ Detail modal ═══════════════════════════ */
 function Modal({ project: p, total, onClose, onNav, onTag }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [mode, setMode] = useState('recruiter');
   const [typed, setTyped] = useState('');
+  const [activeExplainer, setActiveExplainer] = useState('arch');
   const dialogRef = useRef(null);
   const closeRef = useRef(null);
   const summary = useMemo(() => summarizeProject(p, mode), [p, mode]);
@@ -359,7 +370,12 @@ function Modal({ project: p, total, onClose, onNav, onTag }) {
     return () => clearInterval(id);
   }, [summary]);
 
-  const navBtn = 'grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-black/30 text-slate-200 backdrop-blur transition hover:border-accent/60 hover:text-accent';
+  const navBtn = cn(
+    'grid h-9 w-9 place-items-center rounded-full border backdrop-blur transition hover:border-accent/60 hover:text-accent',
+    isDark
+      ? 'border-white/10 bg-black/30 text-slate-200'
+      : 'border-foreground/10 bg-background/60 text-muted',
+  );
 
   return (
     <motion.div
@@ -379,14 +395,19 @@ function Modal({ project: p, total, onClose, onNav, onTag }) {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.98 }}
         transition={{ duration: 0.4, ease: EASE }}
-        className="scroll-thin relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/10 bg-[rgb(10_11_16)] text-slate-100 shadow-[0_30px_120px_-20px_rgb(0_0_0/0.9)]"
+        className={cn(
+          'scroll-thin relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border shadow-[0_30px_120px_-20px_rgb(0_0_0/0.9)]',
+          isDark
+            ? 'border-white/10 bg-[rgb(10_11_16)] text-slate-100'
+            : 'border-line/15 bg-background text-foreground',
+        )}
       >
         {/* banner */}
-        <div className="relative h-40 overflow-hidden border-b border-white/10" style={{ background: mesh(h) }}>
-          <div aria-hidden className="absolute inset-0 [background-image:radial-gradient(rgb(255_255_255/.16)_1px,transparent_1px)] [background-size:16px_16px] [mask-image:linear-gradient(160deg,#000,transparent_75%)]" />
-          <div aria-hidden className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[rgb(10_11_16)] to-transparent" />
-          <div className="absolute inset-x-5 top-5 flex items-center justify-between">
-            <span className="rounded-full border border-white/10 bg-black/30 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-slate-300 backdrop-blur">
+        <div className={cn('relative h-40 overflow-hidden border-b', isDark ? 'border-white/10' : 'border-line/10')} style={{ background: mesh(h) }}>
+          <div aria-hidden className={cn('absolute inset-0 [background-size:16px_16px] [mask-image:linear-gradient(160deg,#000,transparent_75%)]', isDark ? '[background-image:radial-gradient(rgb(255_255_255/.16)_1px,transparent_1px)]' : '[background-image:radial-gradient(rgb(0_0_0/.08)_1px,transparent_1px)]')} />
+          <div aria-hidden className={cn('absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t to-transparent', isDark ? 'from-[rgb(10_11_16)]' : 'from-background')} />
+          <div className="absolute inset-x-3 top-3 flex items-center justify-between sm:inset-x-5 sm:top-5">
+            <span className={cn('rounded-full border px-3 py-1 font-mono text-[11px] uppercase tracking-widest backdrop-blur', isDark ? 'border-white/10 bg-black/30 text-slate-300' : 'border-foreground/10 bg-background/60 text-muted')}>
               {p.category} · {p.year}
             </span>
             <div className="flex items-center gap-2">
@@ -401,17 +422,17 @@ function Modal({ project: p, total, onClose, onNav, onTag }) {
           </div>
         </div>
 
-        <div className="-mt-10 p-6 pt-0 md:p-8 md:pt-0">
+        <div className="-mt-10 p-4 pt-0 sm:p-6 sm:pt-0 md:p-8 md:pt-0">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={p.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
               <h3 id="proj-title" className="relative text-2xl font-semibold tracking-tight md:text-3xl">{p.title}</h3>
-              <p className="mt-3 text-slate-300/85">{p.description}</p>
+              <p className={cn('mt-3', isDark ? 'text-slate-300/85' : 'text-muted')}>{p.description}</p>
 
               {/* auto summary */}
               <div className="mt-6 rounded-2xl border border-accent/25 bg-accent/5 p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent"><Bot size={14} /> Auto summary</span>
-                  <div role="tablist" aria-label="Summary audience" className="flex gap-1 rounded-full border border-white/10 bg-black/20 p-0.5">
+                  <div role="tablist" aria-label="Summary audience" className={cn('flex gap-1 rounded-full border p-0.5', isDark ? 'border-white/10 bg-black/20' : 'border-line/10 bg-line/5')}>
                     {SUMMARY_MODES.map((m) => (
                       <button
                         key={m.id}
@@ -419,7 +440,7 @@ function Modal({ project: p, total, onClose, onNav, onTag }) {
                         role="tab"
                         aria-selected={mode === m.id}
                         onClick={() => setMode(m.id)}
-                        className={cn('relative isolate rounded-full px-3 py-1 text-xs transition-colors', mode === m.id ? 'text-[rgb(7_8_12)]' : 'text-slate-400 hover:text-slate-100')}
+                        className={cn('relative isolate rounded-full px-3 py-1 text-xs transition-colors', mode === m.id ? 'text-[rgb(var(--bg))]' : 'text-muted hover:text-foreground')}
                       >
                         {mode === m.id && <motion.span layoutId="sum-mode" transition={{ type: 'spring', stiffness: 400, damping: 32 }} className="absolute inset-0 -z-10 rounded-full bg-accent" />}
                         {m.label}
@@ -427,17 +448,110 @@ function Modal({ project: p, total, onClose, onNav, onTag }) {
                     ))}
                   </div>
                 </div>
-                <p className="min-h-[5.5rem] text-sm leading-relaxed text-slate-200" aria-live="polite">
+                <p className={cn('min-h-[5.5rem] text-sm leading-relaxed', isDark ? 'text-slate-200' : 'text-foreground/85')} aria-live="polite">
                   {typed}
                   {typing && <span aria-hidden className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 animate-pulse bg-accent" />}
                 </p>
               </div>
 
+              {/* AI Architecture & Deep-Dive Explainer */}
+              {p.architecture && (
+                <div className={cn("mt-6 rounded-2xl border p-4", isDark ? "border-white/10 bg-white/[0.02]" : "border-line/15 bg-line/[0.02]")}>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-line/10 pb-3">
+                    <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-widest text-accent">
+                      <Sparkles size={13} /> AI Project Explainer
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {[
+                        { id: 'arch', label: 'Architecture', icon: Layers },
+                        { id: 'db', label: 'Database Design', icon: Database },
+                        { id: 'sec', label: 'Security & RBAC', icon: ShieldCheck },
+                        { id: 'scale', label: 'Scalability', icon: Workflow },
+                      ].map((tab) => {
+                        const TabIcon = tab.icon;
+                        const active = activeExplainer === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setActiveExplainer(tab.id)}
+                            className={cn(
+                              'flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-mono transition',
+                              active
+                                ? 'bg-accent/20 text-accent font-semibold'
+                                : 'text-muted hover:text-foreground hover:bg-line/5'
+                            )}
+                          >
+                            <TabIcon size={12} />
+                            {tab.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeExplainer}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-xs leading-relaxed text-muted"
+                    >
+                      {activeExplainer === 'arch' && (
+                        <div>
+                          <p className="text-foreground font-medium mb-1.5">System Architecture &amp; Data Pipeline:</p>
+                          <p>{p.architecture.overview}</p>
+                        </div>
+                      )}
+                      {activeExplainer === 'db' && (
+                        <div>
+                          <p className="text-foreground font-medium mb-1.5">Database Modeling &amp; Caching:</p>
+                          <p>{p.architecture.databaseDesign}</p>
+                        </div>
+                      )}
+                      {activeExplainer === 'sec' && (
+                        <div>
+                          <p className="text-foreground font-medium mb-1.5">Authentication &amp; Access Governance:</p>
+                          <p>{p.architecture.security}</p>
+                        </div>
+                      )}
+                      {activeExplainer === 'scale' && (
+                        <div>
+                          <p className="text-foreground font-medium mb-1.5">Scalability &amp; Key Architectural Decisions:</p>
+                          <p>{p.architecture.scalability}</p>
+                          {p.architecture.decisions?.length > 0 && (
+                            <ul className="mt-2 space-y-1 list-disc list-inside">
+                              {p.architecture.decisions.map((d, i) => (
+                                <li key={i} className="text-muted">{d}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              )}
+
+              {/* Problem vs Solution */}
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className={cn("rounded-2xl border p-3.5", isDark ? "border-white/10 bg-white/[0.02]" : "border-line/10 bg-line/[0.02]")}>
+                  <h4 className="font-mono text-[11px] uppercase tracking-wider text-amber-400">Problem Statement</h4>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted">{p.challenge}</p>
+                </div>
+                <div className={cn("rounded-2xl border p-3.5", isDark ? "border-white/10 bg-white/[0.02]" : "border-line/10 bg-line/[0.02]")}>
+                  <h4 className="font-mono text-[11px] uppercase tracking-wider text-emerald-400">Engineered Solution</h4>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted">{p.solution}</p>
+                </div>
+              </div>
+
               {p.metrics?.length > 0 && (
-                <dl className="mt-6 grid grid-cols-3 gap-3">
+                <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {p.metrics.map(([k, v]) => (
-                    <motion.div key={k} whileHover={{ y: -2 }} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                      <dt className="text-[11px] text-slate-400">{k}</dt>
+                    <motion.div key={k} whileHover={{ y: -2 }} className={cn('rounded-2xl border p-3', isDark ? 'border-white/10 bg-white/[0.03]' : 'border-line/10 bg-line/5')}>
+                      <dt className="text-[11px] text-muted">{k}</dt>
                       <dd className="mt-0.5 text-sm font-medium">{v}</dd>
                     </motion.div>
                   ))}
@@ -445,7 +559,7 @@ function Modal({ project: p, total, onClose, onNav, onTag }) {
               )}
 
               <div className="mt-5 flex flex-wrap gap-1.5">
-                {(p.tags || []).map((t) => <TechBadge key={t} tag={t} onToggle={() => onTag(norm(t))} />)}
+                {(p.tags || []).map((t) => <TechBadge key={t} tag={t} variant="page" onToggle={() => onTag(norm(t))} />)}
               </div>
 
               <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -455,11 +569,11 @@ function Modal({ project: p, total, onClose, onNav, onTag }) {
                   </a>
                 )}
                 {live && (
-                  <a href={live} target="_blank" rel="noreferrer noopener" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-slate-100 transition hover:border-accent/60 hover:bg-white/5 hover:text-accent">
+                  <a href={live} target="_blank" rel="noreferrer noopener" className={cn('inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium transition hover:border-accent/60 hover:text-accent', isDark ? 'border-white/15 text-slate-100 hover:bg-white/5' : 'border-line/15 text-foreground hover:bg-accent/5')}>
                     Live demo <ExternalLink size={14} />
                   </a>
                 )}
-                {total > 1 && <span className="ml-auto hidden font-mono text-[11px] text-slate-500 sm:block">← → browse · Esc close</span>}
+                {total > 1 && <span className="ml-auto hidden font-mono text-[11px] text-muted sm:block">← → browse · Esc close</span>}
               </div>
             </motion.div>
           </AnimatePresence>
@@ -525,7 +639,7 @@ export default function Projects() {
 
   return (
     <section id="projects" className="section">
-      <SectionHeading eyebrow="04 — Projects" title="Selected work.">
+      <SectionHeading eyebrow="05 — Projects" title="Selected work.">
         Explore by stack, category or keyword — then open any project for a summary tailored to your role.
       </SectionHeading>
 

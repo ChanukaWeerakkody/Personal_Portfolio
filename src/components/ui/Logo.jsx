@@ -2,22 +2,52 @@ import { useCallback, useId, useState } from 'react';
 import { motion } from 'framer-motion';
 
 /**
- * Interactive monogram logo component inspired by backend/distributed systems:
- * Combines a code brace `{` with stylized `C` and `W` letters, integrated with
- * 3 illuminated network nodes / circuit nodes.
+ * "CW." monogram logo with "Chanuka" subtext.
+ *
+ * Layout: a solid disc with a knocked-out "C", and a "W" that straddles the
+ * disc edge (knocked out where it overlaps the disc, solid where it sits
+ * outside), followed by a round full-stop dot and a small subtext line.
  *
  * Fully dynamic:
- * - Uses `rgb(var(--accent))` to blend with all portfolio accent themes.
- * - Interactive hover states with pulsing radar wave rings and node illumination.
- * - Micro-draw path animations on section entry / mount.
+ * - Uses `rgb(var(--accent))` so it adapts to every theme (light / dark).
+ * - Hover: spring scale, ambient aura, ripple ring around the dot.
+ * - Entry animation: disc, letters, dot and subtext fade / scale in.
  *
  * @param {Object}  props
  * @param {number}  [props.size=32]        Width in pixels (proportional height)
  * @param {boolean} [props.animated=true]  Enable micro-animations
  * @param {string}  [props.className='']   Additional CSS classes
- * @param {string}  [props.triggerKey='']  Change key to re-trigger transition animation
- * @param {boolean} [props.showGlow=true]  Whether to render the backdrop neon aura
+ * @param {string}  [props.triggerKey='']  Change key to re-trigger entry animation
+ * @param {boolean} [props.showGlow=true]  Whether to render the backdrop aura
  */
+
+// Geometry (shared coordinate space, see viewBox below)
+const DISC = { cx: 385, cy: 431, r: 254 };
+const DOT = { cx: 970, cy: 505, r: 48 };
+
+// "C": thick arc, open to the right
+const C_PATH = 'M 455.9 382.7 A 86 86 0 1 0 455.9 493.3';
+const C_STROKE = 66;
+
+// "W": single polygon, straddles the disc edge
+const W_POINTS = [
+  [585, 327],
+  [648, 327],
+  [698, 462],
+  [722, 327],
+  [752, 327],
+  [795, 462],
+  [850, 327],
+  [918, 327],
+  [835, 548],
+  [770, 548],
+  [737, 430],
+  [672, 548],
+  [612, 548],
+]
+  .map((p) => p.join(','))
+  .join(' ');
+
 export default function Logo({
   size = 32,
   animated = true,
@@ -26,8 +56,8 @@ export default function Logo({
   showGlow = true,
 }) {
   const uid = useId().replace(/:/g, '');
-  const glowId = `logo-glow-${uid}`;
-  const filterId = `logo-bloom-${uid}`;
+  const discMaskId = `logo-disc-mask-${uid}`;
+  const wMaskId = `logo-w-mask-${uid}`;
   const [hovered, setHovered] = useState(false);
 
   const handleEnter = useCallback(() => setHovered(true), []);
@@ -35,12 +65,13 @@ export default function Logo({
 
   const accent = 'rgb(var(--accent))';
   const accentGlow = 'rgb(var(--accent) / 0.65)';
-  const accentSoft = 'rgb(var(--accent) / 0.22)';
-  const accentBright = 'rgb(var(--accent) / 0.95)';
+  const accentSub = 'rgb(var(--accent) / 0.8)';
 
-  // Aspect ratio is 140 : 100
+  // viewBox is 960 x 600
   const width = size;
-  const height = Math.round(size * (100 / 140));
+  const height = Math.round(size * (600 / 960));
+
+  const maskBounds = { x: 100, y: 150, width: 960, height: 600 };
 
   return (
     <motion.div
@@ -51,7 +82,7 @@ export default function Logo({
       whileTap={animated ? { scale: 0.96 } : undefined}
       transition={{ type: 'spring', stiffness: 420, damping: 22 }}
     >
-      {/* Ambient ambient background glow behind logo on hover */}
+      {/* Ambient background glow behind logo on hover */}
       {showGlow && (
         <motion.div
           className="pointer-events-none absolute inset-0 -z-10 rounded-full blur-md"
@@ -67,7 +98,7 @@ export default function Logo({
       <motion.svg
         key={triggerKey}
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 140 100"
+        viewBox="100 150 960 600"
         width={width}
         height={height}
         fill="none"
@@ -75,141 +106,99 @@ export default function Logo({
         className="overflow-visible"
       >
         <defs>
-          {/* Intense neon bloom for circuit nodes */}
-          <filter id={glowId} x="-60%" y="-60%" width="220%" height="220%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1" />
-            <feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2" />
-            <feMerge>
-              <feMergeNode in="blur2" />
-              <feMergeNode in="blur1" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
+          {/* Disc with the "C" and the overlapping part of the "W" knocked out */}
+          <mask id={discMaskId} maskUnits="userSpaceOnUse" {...maskBounds}>
+            <rect {...maskBounds} fill="#fff" />
+            <path
+              d={C_PATH}
+              stroke="#000"
+              strokeWidth={C_STROKE}
+              strokeLinecap="butt"
+              fill="none"
+            />
+            <polygon points={W_POINTS} fill="#000" />
+          </mask>
 
-          {/* Subtle line glow for stroke highlights */}
-          <filter id={filterId} x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
+          {/* "W" only where it sits outside the disc */}
+          <mask id={wMaskId} maskUnits="userSpaceOnUse" {...maskBounds}>
+            <rect {...maskBounds} fill="#fff" />
+            <circle cx={DISC.cx} cy={DISC.cy} r={DISC.r} fill="#000" />
+          </mask>
         </defs>
 
-        {/* ── 2. Letter 'C' outer sweep ── */}
-        <motion.path
-          d="M 76 22
-             C 68 12, 46 10, 36 22
-             C 24 36, 24 64, 36 78
-             C 46 90, 68 88, 76 78"
-          stroke={accent}
-          strokeWidth="4.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          filter={`url(#${filterId})`}
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 0.8, delay: 0.1, ease: 'easeOut' }}
+        {/* ── Disc with knocked-out "C" ── */}
+        <motion.circle
+          cx={DISC.cx}
+          cy={DISC.cy}
+          r={DISC.r}
+          fill={accent}
+          mask={`url(#${discMaskId})`}
+          style={{ transformOrigin: `${DISC.cx}px ${DISC.cy}px` }}
+          initial={{ scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
         />
 
-        {/* ── 3. Stylized inner diagonal connecting C & W ── */}
-        <motion.path
-          d="M 52 38 L 74 84"
-          stroke={accent}
-          strokeWidth="4.5"
-          strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 0.6, delay: 0.25, ease: 'easeOut' }}
+        {/* ── "W" outside the disc ── */}
+        <motion.polygon
+          points={W_POINTS}
+          fill={accent}
+          mask={`url(#${wMaskId})`}
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.25, ease: 'easeOut' }}
         />
 
-        {/* ── 4. Letter 'W' body & right arm ── */}
-        <motion.path
-          d="M 74 84 L 90 48 L 104 84 L 126 30"
-          stroke={accent}
-          strokeWidth="4.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          filter={`url(#${filterId})`}
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 0.85, delay: 0.3, ease: 'easeOut' }}
+        {/* ── Full-stop dot ── */}
+        <motion.circle
+          cx={DOT.cx}
+          cy={DOT.cy}
+          r={DOT.r}
+          fill={accent}
+          style={{ transformOrigin: `${DOT.cx}px ${DOT.cy}px` }}
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: hovered ? 1.12 : 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 350, delay: hovered ? 0 : 0.55 }}
         />
 
-        {/* ── 5. Horizontal circuit interconnects between nodes ── */}
-        <motion.path
-          d="M 74 52 L 88 48 L 102 52"
-          stroke={accentSoft}
-          strokeWidth="2"
-          strokeDasharray="3 3"
-          strokeLinecap="round"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.4 }}
-        />
+        {/* Ripple ring around the dot */}
+        {animated && (
+          <motion.circle
+            cx={DOT.cx}
+            cy={DOT.cy}
+            r={DOT.r}
+            fill="none"
+            stroke={accentGlow}
+            strokeWidth={8}
+            animate={
+              hovered
+                ? { r: [DOT.r, DOT.r + 70, DOT.r + 100], opacity: [0.9, 0.4, 0] }
+                : { r: [DOT.r, DOT.r + 30, DOT.r], opacity: [0.35, 0.08, 0.35] }
+            }
+            transition={{
+              duration: hovered ? 1.2 : 2.6,
+              repeat: Infinity,
+              ease: 'easeOut',
+            }}
+          />
+        )}
 
-        {/* ── 6. The 3 Glowing Network / Circuit Nodes ── */}
-        {[
-          { cx: 74, cy: 52, delay: 0.65 },
-          { cx: 88, cy: 48, delay: 0.75 },
-          { cx: 102, cy: 52, delay: 0.85 },
-        ].map((node, i) => (
-          <g key={`node-${i}`} filter={`url(#${glowId})`}>
-            {/* Core glowing dot */}
-            <motion.circle
-              cx={node.cx}
-              cy={node.cy}
-              r={hovered ? 4.5 : 3.8}
-              fill={accentBright}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{
-                delay: node.delay,
-                duration: 0.3,
-                type: 'spring',
-                stiffness: 350,
-              }}
-            />
-
-            {/* Radiant white-hot center for cinematic neon depth */}
-            <circle
-              cx={node.cx}
-              cy={node.cy}
-              r={hovered ? 2.2 : 1.6}
-              fill="#ffffff"
-              opacity={0.9}
-            />
-
-            {/* Micro-pulsing ripple wave on hover or active */}
-            {animated && (
-              <motion.circle
-                cx={node.cx}
-                cy={node.cy}
-                r={3.8}
-                fill="none"
-                stroke={accentGlow}
-                strokeWidth={1.5}
-                animate={
-                  hovered
-                    ? {
-                        r: [3.8, 12, 16],
-                        opacity: [0.9, 0.4, 0],
-                      }
-                    : {
-                        r: [3.8, 8, 3.8],
-                        opacity: [0.4, 0.1, 0.4],
-                      }
-                }
-                transition={{
-                  duration: hovered ? 1.2 : 2.4,
-                  repeat: Infinity,
-                  ease: 'easeOut',
-                  delay: i * 0.25,
-                }}
-              />
-            )}
-          </g>
-        ))}
+        {/* ── Subtext ── */}
+        <motion.text
+          x={1015}
+          y={705}
+          textAnchor="end"
+          fill={accentSub}
+          fontSize={56}
+          fontWeight={600}
+          letterSpacing={6}
+          style={{ fontFamily: 'inherit' }}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.7 }}
+        >
+          Chanuka
+        </motion.text>
       </motion.svg>
     </motion.div>
   );

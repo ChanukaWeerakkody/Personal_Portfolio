@@ -5,6 +5,7 @@ const ALIASES = {
   about: ['about', 'bio', 'who'],
   experience: ['experience', 'journey', 'timeline', 'career', 'work history', 'education'],
   skills: ['skills', 'skill', 'matcher', 'stack', 'tech'],
+  architecture: ['architecture', 'system design', 'engineering', 'systems', 'blueprints'],
   projects: ['projects', 'project', 'portfolio', 'work'],
   github: ['github', 'git hub', 'stats', 'activity'],
   writing: ['writing', 'blog', 'articles', 'posts', 'medium'],

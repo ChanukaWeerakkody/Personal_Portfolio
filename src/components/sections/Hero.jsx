@@ -53,17 +53,26 @@ export default function Hero() {
         </motion.div>
 
         <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1 }}
-          className="max-w-3xl text-5xl font-semibold leading-[1.05] sm:text-6xl md:text-7xl">
-          Backends that are <span className="gradient-text">fast, secure</span> &amp; built to scale.
+          className="max-w-4xl text-4xl min-[440px]:text-5xl sm:text-6xl md:text-7xl font-semibold leading-[1.08] sm:leading-[1.05]">
+          Building <span className="gradient-text">scalable systems</span>, intelligent apps &amp; real-time experiences.
         </motion.h1>
 
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-6 flex items-center gap-2 font-mono text-sm text-accent md:text-base">
           <Sparkles size={16} /> <Typewriter words={profile.roles} />
         </motion.p>
 
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-5 max-w-xl text-lg text-muted">
-          Hi, I'm <span className="text-foreground">{profile.name}</span>. {profile.tagline}
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="mt-5 max-w-2xl text-lg text-muted">
+          Hi, I'm <span className="text-foreground font-medium">{profile.name}</span>. {profile.tagline}
         </motion.p>
+
+        {/* Core engineering pillars quick bar */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.58 }} className="mt-5 flex flex-wrap gap-2 max-w-2xl">
+          {['Backend Engineering', 'Microservices & REST', 'Kafka & Real-Time', 'Database Optimization', 'JWT & RBAC', 'AI Integration'].map((tag) => (
+            <span key={tag} className="chip bg-background/50 border-line/10 text-muted">
+              {tag}
+            </span>
+          ))}
+        </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="mt-9 flex flex-wrap items-center gap-3">
           <Magnetic><button onClick={() => scrollToId('projects')} className="btn btn-primary">View projects <ArrowUpRight size={16} /></button></Magnetic>

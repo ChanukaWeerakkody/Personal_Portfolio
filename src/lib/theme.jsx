@@ -17,10 +17,24 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.classList.toggle('light', theme === 'light');
+    document.documentElement.style.colorScheme = theme;
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#07080c' : '#f7f8fb');
   }, [theme]);
 
   useEffect(() => { document.documentElement.style.setProperty('--accent', accent); }, [accent]);
+
+  useEffect(() => {
+    const onTheme = (e) => setThemeState(e.detail);
+    const onAccent = (e) => setAccentState(e.detail);
+    window.addEventListener('site:theme', onTheme);
+    window.addEventListener('site:accent', onAccent);
+    return () => {
+      window.removeEventListener('site:theme', onTheme);
+      window.removeEventListener('site:accent', onAccent);
+    };
+  }, []);
 
   const setTheme = useCallback((t) => { setThemeState(t); safeStorage.set('pf-theme', t); }, []);
   const setAccent = useCallback((a) => { setAccentState(a); safeStorage.set('pf-accent', a); }, []);
@@ -32,6 +46,5 @@ export function ThemeProvider({ children }) {
 
 export const useTheme = () => {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme must be used inside <ThemeProvider>');
-  return ctx;
+  return ctx || { theme: 'dark', toggle: () => {}, setAccent: () => {}, setTheme: () => {} };
 };

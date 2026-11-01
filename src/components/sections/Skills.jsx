@@ -260,15 +260,18 @@ function JobMatcher() {
       return "I couldn't identify recognisable technologies. Try pasting a fuller job description.";
     }
 
-    if (result.score >= 70) {
-      return 'Strong fit — the core requirements are closely aligned with his stack.';
+    const directCount = result.directMatches?.length || 0;
+    const inferredCount = result.inferredMatches?.length || 0;
+
+    if (result.score >= 75) {
+      return `Strong production fit (${result.score}%) — ${directCount} direct production technologies verified in real SaaS/enterprise apps, plus ${inferredCount} transferable skills.`;
     }
 
-    if (result.score >= 45) {
-      return 'Good overlap with a few areas that may require additional ramp-up.';
+    if (result.score >= 50) {
+      return `Solid technical alignment (${result.score}%) — Core backend foundations match with ${directCount} verified production tools. Minimal ramp-up needed.`;
     }
 
-    return 'Partial overlap. There is still room to assess transferable experience.';
+    return `Partial overlap (${result.score}%) — Transferable backend and API fundamentals apply, though some requested tools are outside his primary stack.`;
   }, [result]);
 
   return (
@@ -403,54 +406,81 @@ function JobMatcher() {
               </div>
 
               {result.matched.length > 0 && (
-                <div className="mt-7 grid gap-6 md:grid-cols-2">
+                <div className="mt-7 grid gap-6 md:grid-cols-3">
+                  {/* Direct Production Experience */}
                   <div>
-                    <h4 className="mb-3 flex items-center gap-2 text-sm font-medium">
-                      <CheckCircle2
-                        size={15}
-                        className="text-emerald-400"
-                      />
-                      Matches
+                    <h4 className="mb-3 flex items-center gap-2 text-sm font-medium text-emerald-400">
+                      <CheckCircle2 size={15} />
+                      Production Experience
                       <span className="font-mono text-[10px] text-muted">
-                        ({result.matched.length})
+                        ({result.directMatches.length})
                       </span>
                     </h4>
 
-                    <ul className="flex flex-wrap gap-2">
-                      {result.matched.map((skill) => (
+                    <ul className="flex flex-wrap gap-1.5">
+                      {result.directMatches.map((skill) => (
                         <li
                           key={skill.name}
-                          className="inline-flex items-center gap-2 rounded-xl border border-line/10 bg-background/40 px-3 py-2 text-xs"
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1.5 text-xs text-foreground"
                         >
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                           {skill.name}
                         </li>
                       ))}
                     </ul>
                   </div>
 
+                  {/* Transferable / Inferred Relevance */}
                   <div>
-                    <h4 className="mb-3 flex items-center gap-2 text-sm font-medium">
-                      <AlertTriangle
-                        size={15}
-                        className="text-amber-400"
-                      />
-                      Not yet in the stack
+                    <h4 className="mb-3 flex items-center gap-2 text-sm font-medium text-sky-400">
+                      <Sparkles size={14} />
+                      Transferable Relevance
+                      <span className="font-mono text-[10px] text-muted">
+                        ({result.inferredMatches.length})
+                      </span>
+                    </h4>
+
+                    {result.inferredMatches.length > 0 ? (
+                      <ul className="flex flex-wrap gap-1.5">
+                        {result.inferredMatches.map((skill) => (
+                          <li
+                            key={skill.name}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-sky-500/20 bg-sky-500/10 px-2.5 py-1.5 text-xs text-foreground"
+                          >
+                            <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+                            {skill.name}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-muted">Direct core match covers requirements.</p>
+                    )}
+                  </div>
+
+                  {/* Missing Gaps */}
+                  <div>
+                    <h4 className="mb-3 flex items-center gap-2 text-sm font-medium text-amber-400">
+                      <AlertTriangle size={15} />
+                      Missing Requirements
+                      <span className="font-mono text-[10px] text-muted">
+                        ({result.gaps.length})
+                      </span>
                     </h4>
 
                     {result.gaps.length > 0 ? (
-                      <ul className="flex flex-wrap gap-2">
+                      <ul className="flex flex-wrap gap-1.5">
                         {result.gaps.map((gap) => (
                           <li
                             key={gap}
-                            className="rounded-xl border border-line/10 bg-background/40 px-3 py-2 text-xs text-muted"
+                            className="rounded-xl border border-amber-500/20 bg-amber-500/10 px-2.5 py-1.5 text-xs text-muted"
                           >
                             {gap}
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-sm text-muted">
-                        No obvious gaps detected.
+                      <p className="text-xs text-emerald-400/80 flex items-center gap-1">
+                        <CheckCircle2 size={12} /> No critical stack gaps found.
                       </p>
                     )}
                   </div>

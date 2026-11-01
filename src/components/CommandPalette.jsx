@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Bot,
@@ -17,21 +17,35 @@ import { ACCENTS, useTheme } from '@/lib/theme';
 import { useApp } from '@/lib/app';
 import { cn, scrollToId } from '@/lib/utils';
 
-export default function CommandPalette() {
+export default function CommandPalette({ isOpen: propIsOpen, onClose: propOnClose } = {}) {
   const {
-    paletteOpen: open,
-    setPaletteOpen: setOpen,
-    setChatOpen,
-    toast,
+    paletteOpen: appPaletteOpen = false,
+    setPaletteOpen: appSetPaletteOpen,
+    setChatOpen = () => {},
+    toast = () => {},
   } = useApp();
 
-  const { theme, toggle, setAccent } = useTheme();
+  const isControlled = propIsOpen !== undefined;
+  const open = isControlled ? propIsOpen : appPaletteOpen;
+  const setOpen = useCallback(
+    (nextVal) => {
+      const nextOpen = typeof nextVal === 'function' ? nextVal(open) : nextVal;
+      if (!nextOpen && propOnClose) {
+        propOnClose();
+      }
+      appSetPaletteOpen?.(nextOpen);
+    },
+    [open, propOnClose, appSetPaletteOpen],
+  );
+
+  const { theme = 'dark', toggle = () => {}, setAccent = () => {} } = useTheme();
 
   const [q, setQ] = useState('');
   const [idx, setIdx] = useState(0);
 
   const inputRef = useRef(null);
   const listRef = useRef(null);
+  const paletteRef = useRef(null);
 
   /**
    * Command definitions
@@ -165,6 +179,35 @@ export default function CommandPalette() {
   }, [setOpen]);
 
   /**
+   * Dismiss command palette when an outside-click or pointer event occurs
+   * outside the command palette container boundaries.
+   * Cleans up event listeners on unmount or when closed to prevent memory leaks.
+   */
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const handleOutsideClick = (event) => {
+      if (
+        paletteRef.current &&
+        event.target &&
+        !paletteRef.current.contains(event.target)
+      ) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handleOutsideClick);
+    document.addEventListener('mousedown', handleOutsideClick);
+
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideClick);
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [open, setOpen]);
+
+  /**
    * Reset search and focus input whenever palette opens.
    */
   useEffect(() => {
@@ -285,10 +328,13 @@ export default function CommandPalette() {
           onClick={() => setOpen(false)}
         >
           <motion.div
+            ref={paletteRef}
             role="dialog"
             aria-modal="true"
             aria-label="Command palette"
             onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
             initial={{
               opacity: 0,
               y: -12,

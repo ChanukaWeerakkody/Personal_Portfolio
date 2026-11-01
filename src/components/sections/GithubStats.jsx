@@ -35,7 +35,7 @@ export default function GithubStats() {
 
   return (
     <section id="github" className="section">
-      <SectionHeading eyebrow="05 — Open source" title="Open-source activity.">Live GitHub REST metrics plus a Bitbucket activity summary that respects private-workspace restrictions.</SectionHeading>
+      <SectionHeading eyebrow="06 — Open source" title="Open-source activity.">Live GitHub REST metrics plus a Bitbucket activity summary that respects private-workspace restrictions.</SectionHeading>
 
       {failed ? (
         <SpotlightCard className="p-8 text-center">
@@ -93,7 +93,7 @@ export default function GithubStats() {
           </SpotlightCard>
 
           <div className="grid gap-5 lg:col-span-3 lg:grid-cols-2">
-            <SpotlightCard className="p-6">
+            {/* <SpotlightCard className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="font-mono text-xs uppercase tracking-widest text-accent">GitHub overview</h3>
@@ -103,25 +103,30 @@ export default function GithubStats() {
               </div>
               <img
                 className="mt-5 w-full rounded-xl border border-line/10 bg-background/60"
-                src={`https://github-readme-stats.vercel.app/api?username=${user}&show_icons=true&hide_border=true&hide_title=true&include_all_commits=true&count_private=false&theme=transparent`}
+                src={`https://github-readme-stats.vercel.app/api?username=${user}&show_icons=true&hide_border=true&hide_title=true&include_all_commits=true&count_private=false&theme=transparent&title_color=${isDark ? 'edeef2' : '0e111a'}&text_color=${isDark ? '949cac' : '586070'}&icon_color=6366f1`}
                 alt="GitHub statistics"
                 loading="lazy"
               />
-            </SpotlightCard>
+            </SpotlightCard> */}
 
             <SpotlightCard className="p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="font-mono text-xs uppercase tracking-widest text-accent">Bitbucket activity</h3>
-                  <p className="mt-2 text-sm text-muted">Curated activity summary for private / restricted workspaces. Not presented as live API data.</p>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-mono text-xs uppercase tracking-widest text-accent">Bitbucket activity</h3>
+                    <span className="rounded-full border border-line/15 bg-line/5 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-muted">
+                      Private Enterprise Workspaces
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted">Curated distribution summary for private enterprise repositories. Commercial client source code is protected under NDA and not exposed via public API.</p>
                 </div>
-                <GitBranch size={20} className="text-accent" />
+                <GitBranch size={20} className="shrink-0 text-accent" />
               </div>
               <div className="mt-5 space-y-3">
                 {bitbucketActivity.map(([label, value]) => (
                   <div key={label}>
                     <div className="flex items-center justify-between text-xs">
-                      <span>{label}</span><span className="text-muted">{value} activities</span>
+                      <span>{label}</span><span className="font-mono text-[11px] text-muted">{value} enterprise tasks</span>
                     </div>
                     <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line/10">
                       <div className="h-full rounded-full bg-accent" style={{ width: `${Math.min(value * 4, 100)}%` }} />
@@ -129,9 +134,9 @@ export default function GithubStats() {
                   </div>
                 ))}
               </div>
-              <div className="mt-5 flex items-center gap-2 rounded-xl border border-line/10 bg-card/5 p-3 text-xs text-muted">
+              <div className="mt-5 flex items-center gap-2 rounded-xl border border-line/10 bg-line/[0.04] p-3 text-xs text-muted">
                 <Activity size={14} className="shrink-0 text-accent" />
-                Private workspace activity is intentionally represented as a non-live summary.
+                Demonstration distribution representing commercial engineering contributions. GitHub above reflects 100% verified live public API data.
               </div>
             </SpotlightCard>
           </div>

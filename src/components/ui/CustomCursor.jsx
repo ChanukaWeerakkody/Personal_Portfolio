@@ -61,7 +61,7 @@ export default function CustomCursor() {
   return (
     <>
       <motion.div
-        className="fixed top-0 left-0 w-2.5 h-2.5 bg-[var(--accent)] rounded-full pointer-events-none z-[9999] shadow-[0_0_10px_var(--accent)]"
+        className="fixed top-0 left-0 w-2.5 h-2.5 bg-[rgb(var(--accent))] rounded-full pointer-events-none z-[9999] shadow-[0_0_10px_rgb(var(--accent))]"
         style={{
           x: cursorX,
           y: cursorY,
@@ -76,7 +76,7 @@ export default function CustomCursor() {
       />
 
       <motion.div
-        className="fixed top-0 left-0 rounded-full pointer-events-none z-[9998] border border-[var(--accent)]/40 backdrop-blur-[1px] bg-[var(--accent)]/5"
+        className="fixed top-0 left-0 rounded-full pointer-events-none z-[9998] border border-[rgb(var(--accent)/0.4)] backdrop-blur-[1px] bg-[rgb(var(--accent)/0.05)]"
         style={{
           x: cursorX,
           y: cursorY,
@@ -88,8 +88,8 @@ export default function CustomCursor() {
           width: isHovering ? 48 : 32,
           height: isHovering ? 48 : 32,
           scale: isMouseDown ? 0.85 : 1,
-          borderColor: isHovering ? 'var(--accent)' : 'rgba(var(--accent-rgb), 0.4)',
-          backgroundColor: isHovering ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--accent-rgb), 0.03)',
+          borderColor: isHovering ? 'rgb(var(--accent))' : 'rgb(var(--accent) / 0.4)',
+          backgroundColor: isHovering ? 'rgb(var(--accent) / 0.15)' : 'rgb(var(--accent) / 0.03)',
         }}
         transition={{ type: 'spring', damping: 20, stiffness: 300, mass: 0.2 }}
       />

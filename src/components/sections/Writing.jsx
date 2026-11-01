@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-mot
 import { ArrowUpRight, BookOpen, Clock } from 'lucide-react';
 import { articles, profile } from '@/data/profile';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/lib/theme';
 import SectionHeading from '@/components/ui/SectionHeading';
 
 /* ═══════════════════════════ Constants & helpers ═══════════════════════════ */
@@ -73,7 +74,6 @@ function useMedia(query) {
 
 /* ═══════════════════════════ Pieces ═══════════════════════════ */
 function TechBadge({ tag, count, active = false, onToggle, variant = 'dark' }) {
-  const dark = variant === 'dark';
   return (
     <motion.button
       type="button"
@@ -89,8 +89,10 @@ function TechBadge({ tag, count, active = false, onToggle, variant = 'dark' }) {
         active
           ? 'border-[rgb(var(--c))] bg-[rgb(var(--c)/0.18)] shadow-[0_0_18px_-4px_rgb(var(--c)/0.9)]'
           : 'border-[rgb(var(--c)/0.2)] bg-[rgb(var(--c)/0.06)] hover:border-[rgb(var(--c)/0.65)] hover:bg-[rgb(var(--c)/0.14)]',
-        dark
-          ? active ? 'text-white' : 'text-slate-300 hover:text-white'
+        variant === 'dark'
+          ? active
+            ? 'text-[rgb(var(--surface-text))]'
+            : 'text-[rgb(var(--surface-muted))] hover:text-[rgb(var(--surface-text))]'
           : active ? 'text-foreground' : 'text-muted hover:text-foreground',
       )}
     >
@@ -130,12 +132,19 @@ const CORNERS = [
 
 /* ── Cinematic preview panel (desktop) ── */
 function Preview({ article: a, index, total, latest, activeTag, onTag, reduce }) {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const h = hue(a.title);
   const tags = a.tags || [];
   const excerpt = a.excerpt ?? a.summary ?? a.description;
 
   return (
-    <div className="relative min-h-[34rem] overflow-hidden rounded-3xl border border-white/10 bg-[rgb(10_11_16)] text-slate-100 shadow-[0_30px_100px_-30px_rgb(0_0_0/0.9)]">
+    <div className={cn(
+      'relative min-h-[34rem] overflow-hidden rounded-3xl border shadow-[0_30px_100px_-30px_rgb(0_0_0/0.9)]',
+      isDark
+        ? 'border-white/10 bg-[rgb(10_11_16)] text-slate-100'
+        : 'border-line/15 bg-background text-foreground',
+    )}>
       {/* aurora crossfades with each article's hue */}
       <AnimatePresence initial={false}>
         <motion.div
@@ -149,7 +158,12 @@ function Preview({ article: a, index, total, latest, activeTag, onTag, reduce })
           transition={{ duration: 0.9 }}
         />
       </AnimatePresence>
-      <div aria-hidden className="absolute inset-0 [background-image:linear-gradient(rgb(255_255_255/.04)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/.04)_1px,transparent_1px)] [background-size:44px_44px] [mask-image:radial-gradient(ellipse_at_center,#000,transparent_75%)]" />
+      <div aria-hidden className={cn(
+        'absolute inset-0 [background-size:44px_44px] [mask-image:radial-gradient(ellipse_at_center,#000,transparent_75%)]',
+        isDark
+          ? '[background-image:linear-gradient(rgb(255_255_255/.04)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/.04)_1px,transparent_1px)]'
+          : '[background-image:linear-gradient(rgb(0_0_0/.04)_1px,transparent_1px),linear-gradient(90deg,rgb(0_0_0/.04)_1px,transparent_1px)]',
+      )} />
       {!reduce && (
         <motion.span
           aria-hidden
@@ -170,7 +184,7 @@ function Preview({ article: a, index, total, latest, activeTag, onTag, reduce })
           animate="show"
           exit={{ opacity: 0, y: -8, transition: { duration: 0.18 } }}
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.07 } } }}
-          className="relative z-10 flex min-h-[34rem] flex-col p-8 xl:p-10"
+          className="relative z-10 flex min-h-[34rem] flex-col p-6 sm:p-8 xl:p-10"
         >
           {/* outlined issue number */}
           <motion.span
@@ -178,13 +192,18 @@ function Preview({ article: a, index, total, latest, activeTag, onTag, reduce })
             initial={reduce ? false : { opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: EASE }}
-            className="pointer-events-none absolute -right-2 -top-6 select-none font-mono text-[13rem] font-bold leading-none text-transparent [-webkit-text-stroke:1px_rgb(255_255_255/0.14)]"
+            className={cn(
+              'pointer-events-none absolute -right-2 -top-6 select-none font-mono text-[13rem] font-bold leading-none text-transparent',
+              isDark
+                ? '[-webkit-text-stroke:1px_rgb(255_255_255/0.14)]'
+                : '[-webkit-text-stroke:1px_rgb(0_0_0/0.08)]',
+            )}
           >
             {pad(index + 1)}
           </motion.span>
 
-          <motion.div variants={rise} className="relative flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-slate-400">
-            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 backdrop-blur">
+          <motion.div variants={rise} className="relative flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-muted">
+            <span className={cn('rounded-full border px-2.5 py-1 backdrop-blur', isDark ? 'border-white/10 bg-white/5' : 'border-foreground/10 bg-background/50')}>
               Issue {pad(index + 1)} / {pad(total)}
             </span>
             {latest && (
@@ -203,14 +222,14 @@ function Preview({ article: a, index, total, latest, activeTag, onTag, reduce })
             <WordReveal text={a.title} reduce={reduce} className="max-w-[22ch] text-4xl font-semibold leading-[1.08] tracking-tight xl:text-5xl" />
 
             {excerpt && (
-              <motion.p variants={rise} className="mt-5 line-clamp-3 max-w-xl text-[15px] leading-relaxed text-slate-300/85">
+              <motion.p variants={rise} className={cn('mt-5 line-clamp-3 max-w-xl text-[15px] leading-relaxed', isDark ? 'text-slate-300/85' : 'text-muted')}>
                 {excerpt}
               </motion.p>
             )}
 
             <motion.div variants={rise} className="mt-6 flex flex-wrap gap-1.5">
               {tags.map((t) => (
-                <TechBadge key={t} tag={t} active={activeTag === norm(t)} onToggle={() => onTag(norm(t))} />
+                <TechBadge key={t} tag={t} variant="page" active={activeTag === norm(t)} onToggle={() => onTag(norm(t))} />
               ))}
             </motion.div>
 
@@ -219,15 +238,15 @@ function Preview({ article: a, index, total, latest, activeTag, onTag, reduce })
                 href={a.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center gap-3 rounded-full bg-accent py-2 pl-6 pr-2 text-sm font-semibold text-[rgb(7_8_12)] shadow-[0_0_40px_-8px_rgb(var(--accent)/0.8)] outline-none transition-shadow hover:shadow-[0_0_56px_-6px_rgb(var(--accent)/0.95)] focus-visible:ring-2 focus-visible:ring-white"
+                className="group inline-flex items-center gap-3 rounded-full bg-accent py-2 pl-6 pr-2 text-sm font-semibold text-[rgb(var(--bg))] shadow-[0_0_40px_-8px_rgb(var(--accent)/0.8)] outline-none transition-shadow hover:shadow-[0_0_56px_-6px_rgb(var(--accent)/0.95)] focus-visible:ring-2 focus-visible:ring-foreground"
               >
                 Read on Medium
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-[rgb(7_8_12)] text-accent transition-transform duration-300 group-hover:rotate-45">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-[rgb(var(--bg))] text-accent transition-transform duration-300 group-hover:rotate-45">
                   <ArrowUpRight size={16} />
                 </span>
               </a>
               {a.read && (
-                <span className="inline-flex items-center gap-1.5 font-mono text-xs text-slate-400">
+                <span className="inline-flex items-center gap-1.5 font-mono text-xs text-muted">
                   <Clock size={13} /> {a.read}
                 </span>
               )}
@@ -345,7 +364,7 @@ export default function Writing() {
 
   return (
     <section id="writing" ref={sectionRef} className="section">
-      <SectionHeading eyebrow="06 — Writing" title="Notes on backend engineering.">
+      <SectionHeading eyebrow="07 — Writing" title="Notes on backend engineering.">
         Articles on architecture, security and DevOps, published on Medium.
       </SectionHeading>
 

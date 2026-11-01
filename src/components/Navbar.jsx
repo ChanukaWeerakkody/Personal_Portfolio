@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Command, Menu, Moon, Sun, X, Mic, Settings } from 'lucide-react';
-import { navItems, profile } from '@/data/profile';
+import { navItems } from '@/data/profile';
 import { useActiveSection } from '@/hooks/useActiveSection';
 import { useTheme } from '@/lib/theme';
 import { useApp } from '@/lib/app';
@@ -21,8 +21,6 @@ export default function Navbar({ onVoice, voiceListening }) {
   const go = (id) => { setOpen(false); scrollToId(id); };
 
   const handleOpenPalette = () => {
-    // Main page scroll වීම නතර කිරීම
-    document.body.style.overflow = 'hidden';
     setPaletteOpen(true);
   };
 
@@ -31,7 +29,7 @@ export default function Navbar({ onVoice, voiceListening }) {
       <nav aria-label="Primary" className="glass flex w-full max-w-4xl items-center justify-between rounded-full py-2 pl-5 pr-2 shadow-lg shadow-black/10">
         <button
           onClick={() => go('home')}
-          className="flex items-center gap-2 font-mono text-sm font-medium group"
+          className="group flex items-center rounded-full p-1 transition-transform hover:scale-105"
           aria-label="Back to top"
         >
           <motion.div
@@ -43,9 +41,6 @@ export default function Navbar({ onVoice, voiceListening }) {
           >
             <Logo size={32} triggerKey={active} />
           </motion.div>
-          <span className="transition-colors group-hover:text-accent">
-            {profile.name.split(' ')[0].toLowerCase()}
-          </span>
         </button>
 
         <ul className="hidden items-center gap-0.5 lg:flex">
@@ -54,7 +49,7 @@ export default function Navbar({ onVoice, voiceListening }) {
               <button
                 onClick={() => go(n.id)}
                 aria-current={active === n.id ? 'true' : undefined}
-                className={cn('relative rounded-full px-3 py-1.5 text-sm transition-colors', active === n.id ? 'text-foreground' : 'text-muted hover:text-foreground')}
+                className={cn('relative rounded-full px-2.5 xl:px-3 py-1.5 text-xs xl:text-sm font-medium transition-colors', active === n.id ? 'text-foreground' : 'text-muted hover:text-foreground')}
               >
                 {active === n.id && (
                   <motion.span layoutId="nav-pill" className="absolute inset-0 -z-10 rounded-full bg-accent/15" transition={{ type: 'spring', stiffness: 380, damping: 32 }} />
@@ -115,10 +110,14 @@ export default function Navbar({ onVoice, voiceListening }) {
           >
             {navItems.map((n) => (
               <button key={n.id} onClick={() => go(n.id)}
-                className={cn('flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm', active === n.id ? 'bg-accent/10 text-accent' : 'text-muted hover:text-foreground')}>
+                className={cn('flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm', active === n.id ? 'bg-accent/10 text-accent font-medium' : 'text-muted hover:text-foreground')}>
                 {n.label}<span className="font-mono text-[10px] opacity-50">#{n.id}</span>
               </button>
             ))}
+            <div className="mt-2 border-t border-line/10 px-3 pt-2">
+              <p className="pb-1 text-[11px] font-mono uppercase tracking-wider text-muted">Theme Accent</p>
+              <AccentPicker compact />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

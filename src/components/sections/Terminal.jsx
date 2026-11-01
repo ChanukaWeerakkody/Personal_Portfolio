@@ -4,6 +4,7 @@ import { ChevronRight, Terminal as TerminalIcon } from 'lucide-react';
 import { articles, profile, projects, skills, timeline } from '@/data/profile';
 import { ask } from '@/lib/assistant';
 import { cn, scrollToId, safeStorage } from '@/lib/utils';
+import { useTheme } from '@/lib/theme';
 import SectionHeading from '@/components/ui/SectionHeading';
 
 /* ════════════════════════════════════════════════════════════════════
@@ -12,7 +13,7 @@ import SectionHeading from '@/components/ui/SectionHeading';
  * Writes to localStorage ('pf-theme', 'pf-accent') for cross-page persistence.
  * Every change fires a window CustomEvent so any component can subscribe.
  * ════════════════════════════════════════════════════════════════════ */
-const SECTIONS = ['home', 'about', 'experience', 'skills', 'projects', 'github', 'writing', 'contact', 'terminal'];
+const SECTIONS = ['home', 'about', 'experience', 'skills', 'architecture', 'projects', 'github', 'writing', 'contact', 'terminal'];
 const ACCENTS = {
   indigo: '99 102 241',
   emerald: '52 211 153',
@@ -702,13 +703,24 @@ function getCompletions(input) {
 }
 
 /* ── Visual bits ── */
-const KIND = {
-  in: 'text-slate-100',
-  out: 'text-slate-300',
-  ok: 'text-emerald-400',
-  info: 'text-sky-300',
-  dim: 'text-slate-500',
-  err: 'text-rose-400',
+const getKindClass = (kind, isDark) => {
+  const darkKinds = {
+    in: 'text-slate-100',
+    out: 'text-slate-300',
+    ok: 'text-emerald-400',
+    info: 'text-sky-300',
+    dim: 'text-slate-500',
+    err: 'text-rose-400',
+  };
+  const lightKinds = {
+    in: 'text-slate-900 font-semibold',
+    out: 'text-slate-700',
+    ok: 'text-emerald-600 font-medium',
+    info: 'text-sky-600 font-medium',
+    dim: 'text-slate-500',
+    err: 'text-rose-600 font-medium',
+  };
+  return (isDark ? darkKinds : lightKinds)[kind] || (isDark ? darkKinds.out : lightKinds.out);
 };
 
 const URL_RE = /(https?:\/\/[^\s)]+)/g;
@@ -725,17 +737,17 @@ function Linkified({ text }) {
   );
 }
 
-function Prompt({ cwd = 'home' }) {
+function Prompt({ cwd = 'home', isDark = true }) {
   return (
     <span className="mr-2 inline-flex select-none items-center gap-1 font-mono text-xs">
       <span className="text-accent font-semibold">~/portfolio</span>
-      <span className="text-sky-400">({cwd})</span>
+      <span className={isDark ? "text-sky-400" : "text-sky-600 font-medium"}>({cwd})</span>
       <span className="text-accent font-bold">❯</span>
     </span>
   );
 }
 
-function Line({ line, reduce }) {
+function Line({ line, reduce, isDark = true }) {
   return (
     <motion.div
       initial={reduce ? false : { opacity: 0, y: 4 }}
@@ -745,11 +757,11 @@ function Line({ line, reduce }) {
     >
       {line.k === 'in' ? (
         <div className="flex flex-wrap items-baseline">
-          <Prompt cwd={line.cwd} />
-          <span className="break-all text-slate-100">{line.t}</span>
+          <Prompt cwd={line.cwd} isDark={isDark} />
+          <span className={cn("break-all", isDark ? "text-slate-100" : "text-slate-900 font-semibold")}>{line.t}</span>
         </div>
       ) : (
-        <pre className={cn('whitespace-pre-wrap break-words font-mono', KIND[line.k] || KIND.out)}>
+        <pre className={cn('whitespace-pre-wrap break-words font-mono', getKindClass(line.k, isDark))}>
           <Linkified text={line.t} />
         </pre>
       )}
@@ -758,15 +770,15 @@ function Line({ line, reduce }) {
 }
 
 const FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-function Spinner() {
+function Spinner({ isDark = true }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setI((n) => (n + 1) % FRAMES.length), 80);
     return () => clearInterval(id);
   }, []);
   return (
-    <div className="flex items-center gap-2 text-slate-400">
-      <span className="text-accent">{FRAMES[i]}</span> running… <span className="text-slate-600">Ctrl+C to cancel</span>
+    <div className={cn("flex items-center gap-2", isDark ? "text-slate-400" : "text-slate-600")}>
+      <span className="text-accent font-bold">{FRAMES[i]}</span> running… <span className={isDark ? "text-slate-600" : "text-slate-400"}>Ctrl+C to cancel</span>
     </div>
   );
 }
@@ -789,6 +801,8 @@ function useCurrentSection() {
 /* ═══════════════════════════ Component ═══════════════════════════ */
 export default function Terminal() {
   const reduce = useReducedMotion();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const wrapRef = useRef(null);
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
@@ -979,14 +993,27 @@ export default function Terminal() {
 
   return (
     <section id="terminal" className="section !pt-0">
-      <SectionHeading eyebrow="08 — Terminal" title="Prefer the command line?">
+      <SectionHeading eyebrow="09 — Terminal" title="Prefer the command line?">
         A real shell for this site. Change the theme, jump between sections, query my GitHub, or pipe output — type <code className="font-mono text-accent">help</code> or <code className="font-mono text-accent">samples</code>.
       </SectionHeading>
 
-      <div ref={wrapRef} className="rounded-2xl bg-gradient-to-br from-accent/40 via-white/10 to-transparent p-px shadow-2xl transition-shadow duration-500 focus-within:shadow-[0_0_70px_-24px_rgb(var(--accent)/0.65)]">
-        <div className="overflow-hidden rounded-[15px] bg-[#07080c]/95 font-mono text-sm text-slate-200 backdrop-blur-xl">
+      <div ref={wrapRef} className={cn(
+        'rounded-2xl p-px shadow-2xl transition-shadow duration-500 focus-within:shadow-[0_0_70px_-24px_rgb(var(--accent)/0.65)]',
+        isDark
+          ? 'bg-gradient-to-br from-accent/40 via-white/10 to-transparent'
+          : 'bg-gradient-to-br from-accent/30 via-line/15 to-transparent',
+      )}>
+        <div className={cn(
+          "overflow-hidden rounded-[15px] font-mono text-sm backdrop-blur-xl transition-colors duration-300",
+          isDark
+            ? "bg-[#07080c]/95 text-slate-200"
+            : "bg-white/95 text-slate-800 shadow-xl border border-line/10"
+        )}>
           {/* ── Title bar ── */}
-          <div className="flex items-center gap-3 border-b border-white/10 bg-white/[0.03] px-4 py-2.5">
+          <div className={cn(
+            "flex items-center gap-3 border-b px-4 py-2.5 transition-colors duration-300",
+            isDark ? "border-white/10 bg-white/[0.03]" : "border-slate-200 bg-slate-100/70"
+          )}>
             <div className="flex items-center gap-2">
               {[
                 ['Clear terminal', 'bg-red-400/80 hover:bg-red-400', () => setLines([])],
@@ -996,16 +1023,31 @@ export default function Terminal() {
                 <button key={label} type="button" aria-label={label} onClick={fn} className={cn('relative h-3 w-3 rounded-full transition before:absolute before:-inset-1.5 before:content-[""]', cls)} />
               ))}
             </div>
-            <span className="flex min-w-0 flex-1 items-center justify-center gap-1.5 truncate text-xs text-slate-400">
+            <span className={cn(
+              "flex min-w-0 flex-1 items-center justify-center gap-1.5 truncate text-xs",
+              isDark ? "text-slate-400" : "text-slate-600 font-medium"
+            )}>
               <TerminalIcon size={12} /> {profile.github}@portfolio — zsh
             </span>
-            <div className="hidden items-center gap-1.5 text-[11px] text-slate-400 sm:flex">
-              <span className="rounded-full border border-white/10 px-2 py-0.5">{site.theme}</span>
-              <span className="flex items-center gap-1.5 rounded-full border border-white/10 px-2 py-0.5">
+            <div className={cn(
+              "hidden items-center gap-1.5 text-[11px] sm:flex",
+              isDark ? "text-slate-400" : "text-slate-600"
+            )}>
+              <span className={cn(
+                "rounded-full border px-2 py-0.5",
+                isDark ? "border-white/10" : "border-slate-300 bg-slate-200/50"
+              )}>{site.theme}</span>
+              <span className={cn(
+                "flex items-center gap-1.5 rounded-full border px-2 py-0.5",
+                isDark ? "border-white/10" : "border-slate-300 bg-slate-200/50"
+              )}>
                 <span className="h-2 w-2 rounded-full" style={{ background: accentRgb ? `rgb(${accentRgb})` : undefined }} />
                 {rgbToHex(site.accent)}
               </span>
-              <span className="rounded-full border border-white/10 px-2 py-0.5 text-sky-400">~/{section}</span>
+              <span className={cn(
+                "rounded-full border px-2 py-0.5",
+                isDark ? "border-white/10 text-sky-400" : "border-slate-300 bg-slate-200/50 text-sky-600"
+              )}>~/{section}</span>
             </div>
           </div>
 
@@ -1018,10 +1060,19 @@ export default function Terminal() {
           >
             <div className="flex h-full flex-col">
               {/* ── Command Samples Toolbar ── */}
-              <div className="border-b border-white/10 bg-white/[0.02]">
+              <div className={cn(
+                "border-b transition-colors duration-300",
+                isDark ? "border-white/10 bg-white/[0.02]" : "border-slate-200 bg-slate-50/70"
+              )}>
                 {/* Category tabs */}
-                <div className="flex items-center gap-1 overflow-x-auto border-b border-white/5 px-3 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Samples:</span>
+                <div className={cn(
+                  "flex items-center gap-1 overflow-x-auto border-b px-3 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+                  isDark ? "border-white/5" : "border-slate-200/60"
+                )}>
+                  <span className={cn(
+                    "mr-1 text-[10px] font-semibold uppercase tracking-wider shrink-0",
+                    isDark ? "text-slate-500" : "text-slate-500"
+                  )}>Samples:</span>
                   {SAMPLE_CATEGORIES.map((cat) => (
                     <button
                       key={cat.id}
@@ -1030,8 +1081,10 @@ export default function Terminal() {
                       className={cn(
                         'shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium transition',
                         activeCategory === cat.id
-                          ? 'bg-accent/20 text-accent font-semibold shadow-sm'
-                          : 'text-slate-400 hover:bg-white/5 hover:text-slate-200',
+                          ? 'bg-accent/20 text-accent font-semibold shadow-xs'
+                          : isDark
+                            ? 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                            : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900',
                       )}
                     >
                       {cat.label}
@@ -1051,10 +1104,18 @@ export default function Terminal() {
                         submit(item.cmd);
                         inputRef.current?.focus({ preventScroll: true });
                       }}
-                      className="group flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] text-slate-300 transition hover:border-accent/60 hover:bg-accent/15 hover:text-accent disabled:opacity-40"
+                      className={cn(
+                        "group flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] transition disabled:opacity-40",
+                        isDark
+                          ? "border-white/10 bg-white/[0.03] text-slate-300 hover:border-accent/60 hover:bg-accent/15 hover:text-accent"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-accent/60 hover:bg-accent/10 hover:text-accent shadow-xs"
+                      )}
                     >
-                      <span className="font-mono">{item.cmd}</span>
-                      <span className="hidden text-[10px] text-slate-500 group-hover:inline group-hover:text-accent/80 sm:inline">
+                      <span className="font-mono font-medium">{item.cmd}</span>
+                      <span className={cn(
+                        "hidden text-[10px] sm:inline transition-colors",
+                        isDark ? "text-slate-500 group-hover:text-accent/80" : "text-slate-400 group-hover:text-accent"
+                      )}>
                         · {item.desc}
                       </span>
                     </button>
@@ -1069,16 +1130,16 @@ export default function Terminal() {
                 onClick={() => { if (!window.getSelection()?.toString()) inputRef.current?.focus({ preventScroll: true }); }}
               >
                 <div role="log" aria-live="polite" className="space-y-1">
-                  {lines.map((l) => <Line key={l.id} line={l} reduce={reduce} />)}
+                  {lines.map((l) => <Line key={l.id} line={l} reduce={reduce} isDark={isDark} />)}
                 </div>
-                {busy && <div className="mt-1"><Spinner /></div>}
+                {busy && <div className="mt-1"><Spinner isDark={isDark} /></div>}
 
                 <div className={cn('mt-1 flex items-center', busy && 'opacity-40')}>
-                  <Prompt cwd={section} />
+                  <Prompt cwd={section} isDark={isDark} />
                   <div className="relative min-w-0 flex-1">
                     <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center whitespace-pre text-base sm:text-sm">
                       <span className="invisible">{input}</span>
-                      <span className="text-slate-600">{ghost}</span>
+                      <span className={isDark ? "text-slate-600" : "text-slate-400"}>{ghost}</span>
                     </div>
                     <label htmlFor="term-input" className="sr-only">Terminal command</label>
                     <input
@@ -1093,10 +1154,13 @@ export default function Terminal() {
                       spellCheck={false}
                       enterKeyHint="send"
                       placeholder={lines.length ? '' : 'help'}
-                      className="relative w-full bg-transparent text-base text-slate-100 caret-accent outline-none placeholder:text-slate-600 sm:text-sm"
+                      className={cn(
+                        "relative w-full bg-transparent text-base caret-accent outline-none sm:text-sm",
+                        isDark ? "text-slate-100 placeholder:text-slate-600" : "text-slate-900 placeholder:text-slate-400"
+                      )}
                     />
                   </div>
-                  <ChevronRight size={14} className="hidden shrink-0 text-slate-700 sm:block" />
+                  <ChevronRight size={14} className={cn("hidden shrink-0 sm:block", isDark ? "text-slate-700" : "text-slate-400")} />
                 </div>
               </div>
 
@@ -1108,7 +1172,7 @@ export default function Terminal() {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="overflow-hidden border-t border-white/5"
+                    className={cn("overflow-hidden border-t", isDark ? "border-white/5" : "border-slate-200 bg-slate-50/50")}
                   >
                     <div className="flex flex-wrap gap-1.5 px-4 py-2">
                       {comp.list.slice(0, 10).map((c, i) => (
@@ -1119,7 +1183,11 @@ export default function Terminal() {
                           onClick={() => { applyCompletion(c); inputRef.current?.focus({ preventScroll: true }); }}
                           className={cn(
                             'rounded-md px-2 py-0.5 text-[11px] transition',
-                            i === Math.min(sel, comp.list.length - 1) ? 'bg-accent/20 text-accent' : 'bg-white/5 text-slate-400 hover:text-slate-200',
+                            i === Math.min(sel, comp.list.length - 1)
+                              ? 'bg-accent/20 text-accent font-semibold'
+                              : isDark
+                                ? 'bg-white/5 text-slate-400 hover:text-slate-200'
+                                : 'bg-slate-200/70 text-slate-700 hover:bg-slate-300/70 hover:text-slate-900',
                           )}
                         >
                           {c}
@@ -1131,7 +1199,10 @@ export default function Terminal() {
               </AnimatePresence>
 
               {/* Footer */}
-              <div className="flex items-center justify-between gap-4 border-t border-white/5 bg-white/[0.02] px-4 py-1.5 text-[11px] text-slate-500">
+              <div className={cn(
+                "flex items-center justify-between gap-4 border-t px-4 py-1.5 text-[11px]",
+                isDark ? "border-white/5 bg-white/[0.02] text-slate-500" : "border-slate-200 bg-slate-100/60 text-slate-500"
+              )}>
                 <span className="hidden truncate sm:inline">Tab complete · ↑↓ history · Ctrl+L clear · Ctrl+C cancel · | grep head tail wc sort</span>
                 <span className="ml-auto flex items-center gap-1.5">
                   <span className={cn('h-1.5 w-1.5 rounded-full', busy ? 'animate-pulse bg-amber-400' : 'bg-emerald-400')} />

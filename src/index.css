@@ -32,6 +32,16 @@
 
   --card-a: 0.04;
   --line-a: 0.09;
+
+  /* Surface tokens for cards with cinematic/solid backgrounds */
+  --surface: 10 11 16;
+  --surface-text: 237 240 246;
+  --surface-muted: 148 156 172;
+  --surface-dim: 100 116 139;
+  --surface-border: 255 255 255;
+  --surface-border-a: 0.1;
+  --surface-fill: 255 255 255;
+  --surface-fill-a: 0.05;
 }
 
 [data-theme='light'] {
@@ -43,6 +53,16 @@
 
   --card-a: 0.7;
   --line-a: 0.1;
+
+  /* Surface tokens for cards — light-friendly equivalents */
+  --surface: 255 255 255;
+  --surface-text: 14 17 26;
+  --surface-muted: 88 96 112;
+  --surface-dim: 148 163 184;
+  --surface-border: 15 23 42;
+  --surface-border-a: 0.12;
+  --surface-fill: 15 23 42;
+  --surface-fill-a: 0.06;
 
   color-scheme: light;
 }

@@ -81,7 +81,7 @@ export default function Contact() {
 
   return (
     <section id="contact" className="section">
-      <SectionHeading eyebrow="07 — Contact" title="Let's build something dependable." />
+      <SectionHeading eyebrow="08 — Contact" title="Let's build something dependable." />
       <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
         <Reveal>
           <SpotlightCard className="flex h-full flex-col justify-between gap-8 p-6 md:p-8">
