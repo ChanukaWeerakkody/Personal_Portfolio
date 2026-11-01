@@ -68,10 +68,10 @@ export default function Navbar({ onVoice, voiceListening }) {
             </button>
           )}
 
-          <button onClick={handleOpenPalette} aria-label="Open command palette (Ctrl K)"
+          {/* <button onClick={handleOpenPalette} aria-label="Open command palette (Ctrl K)"
             className="hidden h-9 items-center gap-1.5 rounded-full px-3 text-xs text-muted transition-colors hover:bg-accent/10 hover:text-foreground sm:flex">
             <Command size={14} /> K
-          </button>
+          </button> */}
 
           {/* Settings icon හරහා Accent Picker එක toggle කිරීම */}
           <div className="relative hidden sm:block">
